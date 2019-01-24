@@ -8,9 +8,48 @@ var items = {};
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  var id = counter.getNextUniqueId();
-  items[id] = text;
-  callback(null, { id, text });
+  // var id = counter.getNextUniqueId(/* need a callback argument*/);
+  // items[id] = text;
+  // callback(null, { id, text });
+
+  // refactor create using error first callback pattern
+  // in some form we need to call getNextUniqueID, with
+  // some callback as an argument
+  
+  counter.getNextUniqueId((err, id) => {
+    if (err) {
+      throw ('error!');
+    } else {
+      items[id] = text;
+      var dir = path.join(exports.dataDir, id + '.txt');   
+      fs.writeFile(dir, text, (err) =>{
+        if(err) {
+          throw ('error creating file');
+        } else {
+          callback(null, { id, text });
+        }
+      });
+    }
+  });
+  // console.log('this is the id ', id);
+  // items[id] = text;
+
+  // var dir = path.join(exports.dataDir, id + '.txt');
+  // console.log('this is the dir ', dir);
+
+  // fs.writeFile(dir, text, (err) =>{
+
+  //   if(err) {
+  //     throw ('error creating file');
+  //   } else {
+  //     callback(null, { id, text });
+  //   }
+  // });
+
+//-----------------------------------------------
+
+
+  
 };
 
 exports.readAll = (callback) => {

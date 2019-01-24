@@ -38,9 +38,30 @@ const writeCounter = (count, callback) => {
 
 // Public API - Fix this function //////////////////////////////////////////////
 
-exports.getNextUniqueId = () => {
-  counter = counter + 1;
-  return zeroPaddedNumber(counter);
+exports.getNextUniqueId = (callback) => {
+  // counter = readCounter(callback);
+
+  // counter = counter + 1;
+  // writeCounter(counter, callback);
+  // readCounter(callback);
+  // return counter;
+  //console.log(readCounter(callback));
+  readCounter((err, counter) => {
+    // console.log('the type is ' + typeof counter);
+    if (err) {
+      writeCounter(0, callback);
+      // console.log('The count is ', counter);
+      // console.log("err!");
+    } else {
+      counter ++;
+      // console.log('the count is ', counter);
+      writeCounter(counter, callback);
+    }
+  });
+  // counter ++;
+  // console.log(counter);
+  // console.log("*****");
+  // return zeroPaddedNumber(counter);
 };
 
 
@@ -48,3 +69,4 @@ exports.getNextUniqueId = () => {
 // Configuration -- DO NOT MODIFY //////////////////////////////////////////////
 
 exports.counterFile = path.join(__dirname, 'counter.txt');
+//console.log(exports.counterFile);
