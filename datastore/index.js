@@ -1,4 +1,6 @@
+const Promise = require('bluebird');
 const fs = require('fs');
+Promise.promisifyAll(fs);
 const path = require('path');
 const _ = require('underscore');
 const counter = require('./counter');
@@ -8,14 +10,6 @@ var items = {};
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  // var id = counter.getNextUniqueId(/* need a callback argument*/);
-  // items[id] = text;
-  // callback(null, { id, text });
-
-  // refactor create using error first callback pattern
-  // in some form we need to call getNextUniqueID, with
-  // some callback as an argument
-  
   counter.getNextUniqueId((err, id) => {
     if (err) {
       throw ('error!');
@@ -31,45 +25,28 @@ exports.create = (text, callback) => {
       });
     }
   });
-  // console.log('this is the id ', id);
-  // items[id] = text;
-
-  // var dir = path.join(exports.dataDir, id + '.txt');
-  // console.log('this is the dir ', dir);
-
-  // fs.writeFile(dir, text, (err) =>{
-
-  //   if(err) {
-  //     throw ('error creating file');
-  //   } else {
-  //     callback(null, { id, text });
-  //   }
-  // });
-
-//-----------------------------------------------
-
-
-  
 };
 
 exports.readAll = (callback) => {
-  fs.readdir(exports.dataDir, (err, files) => {
-    var arr = []; 
-    files.forEach(file => {
-      var str = file.split('.'); 
-      var obj = {};
-      obj.id = str[0];
-      obj.text = str[0];
-      arr.push(obj);
+  fs.readdirAsync(exports.dataDir)
+    .then(function(files) {
+      var arr = _.map(files, (file) => {
+        var id = file.split('.')[0]; 
+        var currentPath = path.join(exports.dataDir, file);
+
+        return fs.readFileAsync(currentPath)
+          .then(function(words){
+            var text = words.toString();
+            return {id, text};
+          });
+      });
+      Promise.all(arr).then(function(content){
+        return callback(null, content);
+      });
     });
-    callback(null, arr);
-  });
 };
 
 exports.readOne = (id, callback) => {
-
-  
-
   var text = items[id];
   if (!text) {
     callback(new Error(`No item with id: ${id}`));
@@ -78,20 +55,14 @@ exports.readOne = (id, callback) => {
   }
 };
 
-
-
-
 exports.update = (id, text, callback) => {
   var item = items[id];
   if (!item) {
     callback(new Error(`No item with id: ${id}`));
   } else {
-    
     fs.readdir(exports.dataDir, (err, files) => {
-
       files.forEach(file => {
         var str = file.split('.'); 
-
         if(str[0] === id) {
           var currentPath = path.join(exports.dataDir, file);  // join path for current file 
           fs.writeFile(currentPath, text, (err) => {
@@ -108,14 +79,6 @@ exports.update = (id, text, callback) => {
 };
 
 exports.delete = (id, callback) => {
-  // var item = items[id];
-  // delete items[id];
-  // if (!item) {
-  //   // report an error if item not found
-  //   callback(new Error(`No item with id: ${id}`));
-  // } else {
-  //   callback();
-  // }
   var item = items[id];
   if (!item) {
     callback(new Error(`No item with id: ${id}`));
