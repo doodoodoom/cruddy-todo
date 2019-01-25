@@ -23,7 +23,7 @@ exports.create = (text, callback) => {
       items[id] = text;
       var dir = path.join(exports.dataDir, id + '.txt');   
       fs.writeFile(dir, text, (err) =>{
-        if(err) {
+        if (err) {
           throw ('error creating file');
         } else {
           callback(null, { id, text });
@@ -67,6 +67,9 @@ exports.readAll = (callback) => {
 };
 
 exports.readOne = (id, callback) => {
+
+  
+
   var text = items[id];
   if (!text) {
     callback(new Error(`No item with id: ${id}`));
@@ -75,24 +78,58 @@ exports.readOne = (id, callback) => {
   }
 };
 
+
+
+
 exports.update = (id, text, callback) => {
   var item = items[id];
   if (!item) {
     callback(new Error(`No item with id: ${id}`));
   } else {
-    items[id] = text;
-    callback(null, { id, text });
+    
+    fs.readdir(exports.dataDir, (err, files) => {
+
+      files.forEach(file => {
+        var str = file.split('.'); 
+
+        if(str[0] === id) {
+          var currentPath = path.join(exports.dataDir, file);  // join path for current file 
+          fs.writeFile(currentPath, text, (err) => {
+            if (err) {
+              throw ('error writing counter');
+            } else {
+              callback(null, { id, text });
+            }
+          });          
+        }
+      });
+    });
   }
 };
 
 exports.delete = (id, callback) => {
+  // var item = items[id];
+  // delete items[id];
+  // if (!item) {
+  //   // report an error if item not found
+  //   callback(new Error(`No item with id: ${id}`));
+  // } else {
+  //   callback();
+  // }
   var item = items[id];
-  delete items[id];
   if (!item) {
-    // report an error if item not found
     callback(new Error(`No item with id: ${id}`));
   } else {
-    callback();
+    fs.readdir(exports.dataDir, (err, files) => {
+      files.forEach(file => {
+        var str = file.split('.'); 
+        if(str[0] === id) {
+          var currentPath = path.join(exports.dataDir, file);
+          fs.unlink(currentPath); 
+          callback();
+        }
+      });
+    });
   }
 };
 
